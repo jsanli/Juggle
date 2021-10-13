@@ -40,6 +40,18 @@ options = {
     theme: "simple"
 };
 
+/**
+ * @typedef {{
+ * pos: Vector,
+ * vel: Vector
+ * }} Can
+ */
+
+/**
+ * @typedef { Can }
+ */
+let cans;
+
 let charDirection = G.CHAR_SPEED;
 let charPos = vec(100, 243);
 let lineDirection = G.LINE_SPEED;
@@ -48,9 +60,7 @@ let slope;
 let b;
 let colors = ["green", "purple", "blue"];
 let bullets = [];
-
-
-
+cans = [];
 
 function update() {
 	if (!ticks) {
