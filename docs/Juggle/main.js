@@ -26,7 +26,9 @@ const G = {
 	
 	LINE_SPEED: 4,
 	CHAR_SPEED: .5,
-	BULLET_SPEED: 8
+	BULLET_SPEED: 8,
+
+	SPAWN_POINT: vec(200 * 0.5, 0) //can spawn point
 };
 
 options = {
@@ -44,7 +46,10 @@ options = {
 /**
  * @typedef {{
  * pos: Vector,
- * vel: Vector
+ * vel: Vector,
+ * ang: number,
+ * dir: number,
+ * ome: number //omega/angular velocity
  * }} Can
  */
 
@@ -61,11 +66,12 @@ let slope;
 let b;
 let colors = ["green", "purple", "blue"];
 let bullets = [];
-cans = [];
+cans = [];											//array to store existing cans
+let gravityMultiplier = 1;
 
 function update() {
 	if (!ticks) {
-		
+		spawnCan();
 	}
 	
 	//draw character
@@ -105,6 +111,13 @@ function update() {
 	charPos.x += charDirection; //moves the character in whichever direction
 	lineEnd.x += lineDirection; //move the shooting line in whichever direction
 	
+	//draw cans
+	color("black");
+	cans.forEach((c) => {
+		bar(c.pos.x, c.pos.y, 6, 4, c.ang);
+	});
+
+	//draw bullets
 	for(let j = 0; j < bullets.length; j++){
 		color("purple");
 		//draw bullet
@@ -119,6 +132,16 @@ function update() {
 			bullets.splice(j, 1);
 		}
 	}
+
+	//apply can physics
+	cans.forEach((c) => {
+		c.pos.add(c.vel);  //update can position
+		c.vel.x *= 0.99; //horizontal drag
+		c.ome *= 0.99; //angular velocity drag
+		c.ang += c.ome; //update angle by adding omega
+		c.vel.y *= (1.01 * gravityMultiplier);  //gravity acceleration
+		c.pos.clamp(5, G.WIDTH - 5, 5, G.HEIGHT - 5);
+	});
 
 }
 
@@ -142,6 +165,11 @@ function Bullet(c, d){
 	//equations are slope = y/x and y^2 + x^2 = 1^2
 	c.x >= d.x ? this.xIter = -1 * Math.sqrt(Math.pow(slope, 2) + 1)/ (Math.pow(slope, 2) + 1) : this.xIter = Math.sqrt(Math.pow(slope, 2) + 1)/ (Math.pow(slope, 2) + 1); //due to the fact that this is quadratic, result is ±. This conditional just determines if the line is to the left or right of the character and sets the x iterator to y or x accordingly
 	this.yIter = Math.sqrt(1- Math.pow(this.xIter, 2)); 
+}
+
+//spawn cans at the fixed spawnpoint with a randomized horizontal velocity
+function spawnCan(){
+	cans.push( {pos: G.SPAWN_POINT, vel: vec( rnd(6) - 3, 0.1), ang: rnd(PI), dir: rnds(-1, 1), ome: rnd(1)} );
 }
 
 
