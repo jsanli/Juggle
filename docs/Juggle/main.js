@@ -43,13 +43,18 @@ options = {
     theme: "simple"
 };
 
+
+/*Can dadatype:
+	(position, velocity, angle, direction, omega)
+	*Omega = angular velocity, Direction = direction of rotation
+*/
 /**
  * @typedef {{
  * pos: Vector,
  * vel: Vector,
  * ang: number,
  * dir: number,
- * ome: number //omega/angular velocity
+ * ome: number
  * }} Can
  */
 
@@ -110,6 +115,15 @@ function update() {
 
 	charPos.x += charDirection; //moves the character in whichever direction
 	lineEnd.x += lineDirection; //move the shooting line in whichever direction
+
+	//Destroy cans that fall off screen
+	cans.forEach((c) => {
+		if(c.pos.y > G.HEIGHT - 10){
+			spawnCan();
+			cans.splice(cans.indexOf(c), 1);
+			
+		}
+	});
 	
 	//draw cans
 	color("black");
@@ -135,10 +149,16 @@ function update() {
 
 	//apply can physics
 	cans.forEach((c) => {
+		//if the can hits a wall, reverse horizontal velocity & angular velocity.
+		//this makes it look like the can is "bouncing" off the walls.
+		if(c.pos.x > G.WIDTH - 6 || c.pos.x < 6){
+			c.vel.x *= -1;
+			c.dir *= -1;
+		}
 		c.pos.add(c.vel);  //update can position
 		c.vel.x *= 0.99; //horizontal drag
 		c.ome *= 0.99; //angular velocity drag
-		c.ang += c.ome; //update angle by adding omega
+		c.ang += c.ome * c.dir; //update angle by adding omega
 		c.vel.y *= (1.01 * gravityMultiplier);  //gravity acceleration
 		c.pos.clamp(5, G.WIDTH - 5, 5, G.HEIGHT - 5);
 	});
@@ -169,7 +189,13 @@ function Bullet(c, d){
 
 //spawn cans at the fixed spawnpoint with a randomized horizontal velocity
 function spawnCan(){
-	cans.push( {pos: G.SPAWN_POINT, vel: vec( rnd(6) - 3, 0.1), ang: rnd(PI), dir: rnds(-1, 1), ome: rnd(1)} );
+	//for some reason, the cons G.SPAWN_POINT breaks the spawn code? Using vec(100, 0) instead
+	let direction = rnd(1);
+	if(direction > 0.5)
+		direction = 1
+	else
+		direction = -1;
+	cans.push( {pos: vec(100, 0), vel: vec( rnd(6) - 3, 0.1), ang: rnd(PI), dir: direction, ome: rnd(1)} );
 }
 
 
