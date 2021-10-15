@@ -136,7 +136,27 @@ function update() {
 		color("purple");
 		//draw bullet
 		arc(bullets[j].current.x, bullets[j].current.y, 1, 1, 0, 2*PI);
+	}
 
+	//check can and bullet collision	
+	for(let j = 0; j < bullets.length; j++){ //iterate through bullets 
+		cans.forEach((c) => { //iterate through cans
+		color("transparent");
+			if (arc(bullets[j].current.x, bullets[j].current.y, 1, 1, 0, 2*PI).isColliding.rect.black && bar(c.pos.x, c.pos.y, 6, 4, c.ang).isColliding.rect.purple){
+				bullets.splice(j, 1);
+				console.log("hit");
+
+				/*insert code to bounce can here
+				*
+				*
+				*
+				*
+				*/
+			}
+		});
+	}
+
+	for(let j = 0; j < bullets.length; j++){ //iterate through bullets 
 		//change bullet position according to component of movement in x and y direction and speed
 		bullets[j].current.x += bullets[j].xIter * G.BULLET_SPEED;
 		bullets[j].current.y -= bullets[j].yIter * G.BULLET_SPEED;
@@ -159,7 +179,8 @@ function update() {
 		c.vel.x *= 0.99; //horizontal drag
 		c.ome *= 0.99; //angular velocity drag
 		c.ang += c.ome * c.dir; //update angle by adding omega
-		c.vel.y *= (1.01 * gravityMultiplier);  //gravity acceleration
+		//input.isPressed ? c.vel.y *= (1.01 * gravityMultiplier / 2) : c.vel.y *= (1.01 * gravityMultiplier) //gravity acceleration is halved when click is held 
+		c.vel.y *= (1.01 * gravityMultiplier)
 		c.pos.clamp(5, G.WIDTH - 5, 5, G.HEIGHT - 5);
 	});
 
