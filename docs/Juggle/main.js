@@ -72,7 +72,8 @@ let b;
 let colors = ["green", "purple", "blue"];
 let bullets = [];
 cans = [];											//array to store existing cans
-let gravityMultiplier = 1;
+let gravity = 1.01;
+let velocityMultiplier = 1.0;
 
 function update() {
 	if (!ticks) {
@@ -90,6 +91,7 @@ function update() {
 	if(input.isPressed && ticks > 20){
 		lineDirection *= 0;
 		charDirection *= 0;
+		velocityMultiplier = 0.98;
 	}
 
 	if(input.isJustReleased && ticks > 20){
@@ -99,6 +101,8 @@ function update() {
 
 		//create a new instance of bullet object and add to array
 		bullets[bullets.length] = new Bullet(vec(charPos.x, charPos.y), vec(lineEnd.x, lineEnd.y)); //create new vectors to avoid pass by reference which for some reason is included in this garbage library
+		
+		velocityMultiplier = 1;
 	}
 
 	if(charPos.x == G.SLIDING_X_BUFFER  && charDirection < 0|| (charPos.x == G.WIDTH - G.SLIDING_X_BUFFER && charDirection > 0))  charDirection *= -1; //changes direction if character reaches the end of set bounds 
@@ -175,12 +179,13 @@ function update() {
 			c.vel.x *= -1;
 			c.dir *= -1;
 		}
-		c.pos.add(c.vel);  //update can position
+		c.pos.add(c.vel.mul(velocityMultiplier));  //update can position
 		c.vel.x *= 0.99; //horizontal drag
-		c.ome *= 0.99; //angular velocity drag
+		c.ome *= (0.99 * velocityMultiplier); //angular velocity drag
 		c.ang += c.ome * c.dir; //update angle by adding omega
 		//input.isPressed ? c.vel.y *= (1.01 * gravityMultiplier / 2) : c.vel.y *= (1.01 * gravityMultiplier) //gravity acceleration is halved when click is held 
-		c.vel.y *= (1.01 * gravityMultiplier)
+		c.vel.y *= gravity;
+		//c.vel.x *= velocityMultiplier;
 		c.pos.clamp(5, G.WIDTH - 5, 5, G.HEIGHT - 5);
 	});
 
