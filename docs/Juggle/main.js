@@ -81,6 +81,9 @@ function update() {
 				cans.splice(0, 1);
 		});
 		spawnCan();
+		
+		lineDirection = G.LINE_SPEED;
+		charDirection = G.CHAR_SPEED;
 	}
 	
 	//draw character
@@ -126,11 +129,11 @@ function update() {
 		if(c.pos.y > G.HEIGHT - 10){
 			play("select");
 			cans.splice(cans.indexOf(c), 1);
-			if(c.hit > 0){
+			/*if(c.hit > 0){
 				spawnCan();
-			}else{
+			}else{*/
 				end();
-			}
+			//}
 		}
 	});
 	
@@ -153,14 +156,14 @@ function update() {
 	for(let j = 0; j < bullets.length; j++){
 		color("purple");
 		//draw bullet
-		arc(bullets[j].current.x, bullets[j].current.y, 3, 3, 0, 2*PI);
+		arc(bullets[j].current.x, bullets[j].current.y, 3, 4, 0, 2*PI);
 	}
 
 	//check can and bullet collision	
 	for(let j = 0; j < bullets.length; j++){ //iterate through bullets 
 		cans.forEach((c) => { //iterate through cans
 		color("transparent");
-			if(bar(c.pos.x, c.pos.y, 6, 4, c.ang).isColliding.rect.purple){
+			if(bar(c.pos.x, c.pos.y, 12, 8, c.ang).isColliding.rect.purple){
 				
 				console.log("hit");
 				play("coin");
@@ -242,7 +245,7 @@ function update() {
 		if(c.vel.y < -1.5)
 			c.vel.y = -1.5;
 		//c.vel.x *= velocityMultiplier;
-		c.pos.clamp(5, G.WIDTH - 5, 5, G.HEIGHT - 5);
+		c.pos.clamp(5, G.WIDTH - 5, -10000, G.HEIGHT - 5);
 	});
 
 }
