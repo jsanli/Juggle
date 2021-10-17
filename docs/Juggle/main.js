@@ -37,10 +37,10 @@ options = {
     isCapturingGameCanvasOnly: true,
     captureCanvasScale: 2,
     seed: 1,
-    isPlayingBgm: false,
+    isPlayingBgm: true,
     isReplayEnabled: true,
 	isDrawingParticleFront: true,
-    theme: "simple"
+    theme: "crt"
 };
 
 
@@ -54,7 +54,8 @@ options = {
  * vel: Vector,
  * ang: number,
  * dir: number,
- * ome: number
+ * ome: number,
+ * hit: number
  * }} Can
  */
 
@@ -72,11 +73,13 @@ let b;
 let colors = ["green", "purple", "blue"];
 let bullets = [];
 cans = [];											//array to store existing cans
-let gravity = 1.01;
-let velocityMultiplier = 1.0;
 
 function update() {
 	if (!ticks) {
+		cans.forEach((c) => {
+			if(cans.length > 0)
+				cans.splice(0, 1);
+		});
 		spawnCan();
 	}
 	
@@ -91,7 +94,6 @@ function update() {
 	if(input.isPressed && ticks > 20){
 		lineDirection *= 0;
 		charDirection *= 0;
-		velocityMultiplier = 0.98;
 	}
 
 	if(input.isJustReleased && ticks > 20){
@@ -101,8 +103,7 @@ function update() {
 
 		//create a new instance of bullet object and add to array
 		bullets[bullets.length] = new Bullet(vec(charPos.x, charPos.y), vec(lineEnd.x, lineEnd.y)); //create new vectors to avoid pass by reference which for some reason is included in this garbage library
-		
-		velocityMultiplier = 1;
+		play("hit");
 	}
 
 	if(charPos.x == G.SLIDING_X_BUFFER  && charDirection < 0|| (charPos.x == G.WIDTH - G.SLIDING_X_BUFFER && charDirection > 0))  charDirection *= -1; //changes direction if character reaches the end of set bounds 
@@ -120,42 +121,92 @@ function update() {
 	charPos.x += charDirection; //moves the character in whichever direction
 	lineEnd.x += lineDirection; //move the shooting line in whichever direction
 
-	//Destroy cans that fall off screen
+	//Destroy cans that fall off screen, end game if un-hit can falls
 	cans.forEach((c) => {
 		if(c.pos.y > G.HEIGHT - 10){
-			spawnCan();
+			play("select");
 			cans.splice(cans.indexOf(c), 1);
-			
+			if(c.hit > 0){
+				spawnCan();
+			}else{
+				end();
+			}
 		}
 	});
 	
 	//draw cans
-	color("black");
+	
 	cans.forEach((c) => {
-		bar(c.pos.x, c.pos.y, 6, 4, c.ang);
+		if(c.hit == 1)
+			color("green");
+		else if(c.hit == 2)
+			color("yellow");
+		else if(c.hit >= 3)
+			color("red");
+		else
+			color("light_black");
+		
+		bar(c.pos.x, c.pos.y, 12, 8, c.ang);
 	});
 
 	//draw bullets
 	for(let j = 0; j < bullets.length; j++){
 		color("purple");
 		//draw bullet
-		arc(bullets[j].current.x, bullets[j].current.y, 1, 1, 0, 2*PI);
+		arc(bullets[j].current.x, bullets[j].current.y, 3, 3, 0, 2*PI);
 	}
 
 	//check can and bullet collision	
 	for(let j = 0; j < bullets.length; j++){ //iterate through bullets 
 		cans.forEach((c) => { //iterate through cans
 		color("transparent");
-			if (arc(bullets[j].current.x, bullets[j].current.y, 1, 1, 0, 2*PI).isColliding.rect.black && bar(c.pos.x, c.pos.y, 6, 4, c.ang).isColliding.rect.purple){
-				bullets.splice(j, 1);
+			if(bar(c.pos.x, c.pos.y, 6, 4, c.ang).isColliding.rect.purple){
+				
 				console.log("hit");
+				play("coin");
 
-				/*insert code to bounce can here
-				*
-				*
-				*
-				*
-				*/
+				c.hit++;
+
+				let addedScore = 0;
+				if(c.hit == 1)
+					addedScore = 100;
+				else if(c.hit == 2)
+					addedScore = 250;
+				else if(c.hit >= 3)
+					addedScore = 500;
+				
+				if(c.hit == 1)
+					color("green");
+				else if(c.hit == 2)
+					color("yellow");
+				else if(c.hit >= 3)
+					color("red");
+				else
+					color("light_black");
+				
+				particle(
+					c.pos.x,
+					c.pos.y,
+					30,
+					3,
+					0,
+					2*PI
+				);
+
+				addScore(addedScore, G.WIDTH * 0.5, G.HEIGHT - 25);
+
+				//can bounce code
+				c.vel.y += -3;
+				c.vel.x += -1.5;
+				c.ome = rnd(1);
+				let direction = rnd(0.2);
+				if(direction > 0.5)
+					direction = 1
+				else
+					direction = -1;
+					c.dir = direction;
+
+				bullets.splice(j, 1);
 			}
 		});
 	}
@@ -179,12 +230,17 @@ function update() {
 			c.vel.x *= -1;
 			c.dir *= -1;
 		}
-		c.pos.add(c.vel.mul(velocityMultiplier));  //update can position
+		c.pos.add(c.vel);  //update can position
 		c.vel.x *= 0.99; //horizontal drag
-		c.ome *= (0.99 * velocityMultiplier); //angular velocity drag
+		c.ome *= 0.99; //angular velocity drag
 		c.ang += c.ome * c.dir; //update angle by adding omega
 		//input.isPressed ? c.vel.y *= (1.01 * gravityMultiplier / 2) : c.vel.y *= (1.01 * gravityMultiplier) //gravity acceleration is halved when click is held 
-		c.vel.y *= gravity;
+		//c.vel.y *= 1.01;
+		c.vel.y += 0.01;
+		//if(c.pos.y < 10)
+		//	c.vel.y = 0;
+		if(c.vel.y < -1.5)
+			c.vel.y = -1.5;
 		//c.vel.x *= velocityMultiplier;
 		c.pos.clamp(5, G.WIDTH - 5, 5, G.HEIGHT - 5);
 	});
@@ -221,7 +277,7 @@ function spawnCan(){
 		direction = 1
 	else
 		direction = -1;
-	cans.push( {pos: vec(100, 0), vel: vec( rnd(6) - 3, 0.1), ang: rnd(PI), dir: direction, ome: rnd(1)} );
+	cans.push( {pos: vec(100, 0), vel: vec( rnd(6) - 3, 0.1), ang: rnd(PI), dir: direction, ome: rnd(0.5), hit: 0} );
 }
 
 
