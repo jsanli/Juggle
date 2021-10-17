@@ -4,7 +4,7 @@ title = `
 
 description = `
 
-Click To Juggle 
+Click To Juggle
 `;
 
 characters = [
